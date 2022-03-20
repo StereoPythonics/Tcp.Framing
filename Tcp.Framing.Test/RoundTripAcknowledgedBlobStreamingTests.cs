@@ -5,7 +5,6 @@ using Xunit;
 
 namespace Tcp.Framing.Test;
 
-
 public class RoundTripAcknowledgedBlobStreamingTests
 {
     [Fact]
