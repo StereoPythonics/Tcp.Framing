@@ -1,20 +1,19 @@
 using Xunit;
 using System.Text;
 namespace Tcp.Framing.Test;
-
-public class RountTripFramingTests
+public class RoundTripFramingTests
 {
     [Fact]
     public void ConfirmRountTripStreamSuccess()
     {
-        IFramedBlobStream blobStream = new SimpleBlobFramer();
+        IFramedBlobStreamWriter blobStream = new SimpleBlobFramer();
         using MemoryStream ms = new MemoryStream();
-        var inputBytes = Encoding.ASCII.GetBytes("ExampleTestString");
+        byte[] inputBytes = Encoding.ASCII.GetBytes("ExampleTestString");
 
         blobStream.WriteBlobAsFrame(inputBytes,ms);
         ms.Seek(0,SeekOrigin.Begin);
 
-        var outputBytes = blobStream.ReadFrameAsBlob(ms);
+        byte[] outputBytes = blobStream.ReadFrameAsBlob(ms);
 
         Assert.True(inputBytes.SequenceEqual(outputBytes));
     }
@@ -23,13 +22,13 @@ public class RountTripFramingTests
     public void ConfirmMissingStartFailure()
     {
         IBlobFramer blobFramer = new SimpleBlobFramer();
-        var inputBytes = Encoding.ASCII.GetBytes("ExampleTestString");
+        byte[] inputBytes = Encoding.ASCII.GetBytes("ExampleTestString");
 
-        var intermediateBytes = blobFramer.FrameBlob(inputBytes).Skip(1).ToArray();
+        byte[] framedBytes = blobFramer.FrameBlob(inputBytes).Skip(1).ToArray();
 
         byte[] outputBytes = new byte[0];
 
-        Assert.Throws<InvalidDataException>(() => outputBytes = blobFramer.UnframeBlob(intermediateBytes));
+        Assert.Throws<InvalidDataException>(() => outputBytes = blobFramer.UnframeBlob(framedBytes));
         Assert.Empty(outputBytes);
     }
 
@@ -37,12 +36,13 @@ public class RountTripFramingTests
     public void ConfirmTruncatedEndFailure()
     {
         IBlobFramer blobFramer = new SimpleBlobFramer();
-        var inputBytes = Encoding.ASCII.GetBytes("ExampleTestString");
+        byte[] inputBytes = Encoding.ASCII.GetBytes("ExampleTestString");
 
-        var intermediateBytes = blobFramer.FrameBlob(inputBytes);
+        byte[] framedBytes = blobFramer.FrameBlob(inputBytes);
+
         byte[] outputBytes = new byte[0];
         
-        Assert.Throws<InvalidDataException>(() => outputBytes = blobFramer.UnframeBlob(intermediateBytes.Take(intermediateBytes.Length/2).ToArray()));
+        Assert.Throws<InvalidDataException>(() => outputBytes = blobFramer.UnframeBlob(framedBytes.Take(framedBytes.Length/2).ToArray()));
         Assert.Empty(outputBytes);
     }
 }

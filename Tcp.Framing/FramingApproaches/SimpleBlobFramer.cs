@@ -1,7 +1,7 @@
 ﻿using System.Text;
 
 namespace Tcp.Framing;
-public class SimpleBlobFramer : IBlobFramer, IFramedBlobStream
+public class SimpleBlobFramer : IBlobFramer, IFramedBlobStreamWriter
 {
     public const int bytesPerInt = 4;
     public static byte[] FrameStartMarker {get;} = Encoding.ASCII.GetBytes("StartFrame");
