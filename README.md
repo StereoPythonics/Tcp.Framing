@@ -94,7 +94,28 @@ This library makes use of System.Text.Json to handle this, but does so through t
 
 ### Advice on rolling your own
 
+The generic ```IBlobSerializer``` interface makes it easy for you to create and use your own serialization implementation.
+```csharp
+public interface IBlobSerializer<T>
+{
+    byte[] Serialize(T inputObject);
+    T Deserialize(ReadOnlySpan<byte> inputBytes);
+}
+```
+
+You can inject your custom serializer into an ```ObjectStreamer``` at construction.
+
+```csharp
+var streamer = new ObjectStreamer<ExampleTestObject>(serverNetworkStream, new YourCustomSerializer());
+```
+
 ## Framing Approach
+It's hard to work with raw network streams, you can request groups of bytes arbitrarily, but there's no inbuilt mechanism for grouping those bytes as descrete messages / objects.
+Framing allows us to wrap an arbitrary set of bytes with identifying information enabling structured retrieval
+### Length Prefixing
+Specifically TCP.Framing makes use of length prefixing to frame byte groups. Length prefixing uses the start of a message to describe the total message length, allowsing a reader to first read the prefix to get the length, and then use the length to request the whole message in one go.
+
+
 
 ## Conversational TCP
 
