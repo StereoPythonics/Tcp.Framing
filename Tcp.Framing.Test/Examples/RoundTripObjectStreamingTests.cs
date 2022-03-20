@@ -1,30 +1,3 @@
-# Tcp.Framing
-A simple library for pushing stuff over TCP streams.
-
-## At a glance
-
-Provided you already have your network streams, sending objects over a shared network stream is trivial.
-
-On your server:
-```csharp
-IObjectStreamer<ExampleObject> serverObjectStreamer = new ObjectStreamer<ExampleObject>(serverNetworkStream);
-serverObjectStreamer.WriteObject(inputObject);
-```
-
-On your client:
-```csharp
-IObjectStreamer<ExampleObject> ClientObjectStreamer = new ObjectStreamer<ExampleObject>(clientNetworkStream);
-outputObject = clientObjectStreamer.ReadObject();
-```
-
-## Example TcpListener/TcpClient configuration.
-
-You probably don't have network streams to work with yet.
-Not to worry! Here's a barebones example that demonstrates how this library integrates with the System.Net.Sockets objects.
-
-This example is chatting with itself over localhost, but the TcpListener / TcpClient can be split between machines for real world applications.
-
-```csharp
 using System.Net.Sockets;
 using System.Net;
 using Xunit;
@@ -37,7 +10,6 @@ public class RoundTripObjectStreamingTests
     {
         ExampleTestObject input = new ExampleTestObject(){ExampleDouble = 1.609344, ExampleInt = 42, ExampleString = "Nice"};
 
-        
         TcpListener listener = new TcpListener(IPAddress.Parse("127.0.0.1"),3456);
         listener.Start();
 
@@ -52,13 +24,33 @@ public class RoundTripObjectStreamingTests
 
         using TcpClient readClient = new TcpClient();
         readClient.Connect("127.0.0.1",3456);
+        
         using NetworkStream clientNetworkStream = readClient.GetStream();
-
         IObjectStreamer<ExampleTestObject> clientObjectStreamer = new ObjectStreamer<ExampleTestObject>(clientNetworkStream);
         Assert.Equal(input,clientObjectStreamer.ReadObject());
     }
+
+    [Fact]
+    public void TestMultiObjectStreamingRoundTrip()
+    {
+        ExampleTestObject input = new ExampleTestObject(){ExampleDouble = 1.609344, ExampleInt = 42, ExampleString = "Nice"};
+
+        TcpListener listener = new TcpListener(IPAddress.Parse("127.0.0.1"),2345);
+        listener.Start();
+
+        Task.Run(() => {
+            using TcpClient client = listener.AcceptTcpClient();
+            using NetworkStream serverNetworkStream = client.GetStream();
+
+            IObjectStreamer<ExampleTestObject> serverObjectStreamer = new ObjectStreamer<ExampleTestObject>(serverNetworkStream);
+            Enumerable.Range(0,100).ToList().ForEach(i => serverObjectStreamer.WriteObject(input));
+        });
+
+        using TcpClient readClient = new TcpClient();
+        readClient.Connect("127.0.0.1",2345);
+        using NetworkStream clientNetworkStream = readClient.GetStream();
+
+        IObjectStreamer<ExampleTestObject> clientObjectStreamer = new ObjectStreamer<ExampleTestObject>(clientNetworkStream);
+        Enumerable.Range(0,100).ToList().ForEach(i => Assert.True(input.Equals(clientObjectStreamer.ReadObject())));
+    }
 }
-```
-
-Documentation lies (even mine), but unit tests don't! Find more working examples under Tcp.Framing.Test/Examples
-
