@@ -60,5 +60,54 @@ public class RoundTripObjectStreamingTests
 }
 ```
 
-Documentation lies (even mine), but unit tests don't! Find more working examples under Tcp.Framing.Test/Examples
+Documentation lies (especially mine), but unit tests don't! Find more working examples under Tcp.Framing.Test/Examples
+
+# The Details
+
+## Contents
+The above should be enough to get you started, but if you're interested in the details here's a summary of what's included here:'
+
+- Object Serialization
+    - System.Text.Json
+    - Advice on rolling your own
+- Framing Approach
+    - Length Prefixing
+    - Start/End Markers
+- Conversational TCP
+    - Overwhelming your target
+    - Seeking Acknowledgement
+- I just want bytes!
+    - byte[] methods
+- Future Plans
+    - TPL Dataflow
+    - Enumeration
+    - Async
+    - Handling drop outs
+
+## Object Serialization
+
+### System.Text.Json
+
+Your objects need to end up as bytes somehow, and while inefficient, utf8 json is a good universal starting point.
+
+This library makes use of System.Text.Json to handle this, but does so through the ```IBlobSerializer``` interface to users to easily swap in their own implementiation.
+
+### Advice on rolling your own
+
+## Framing Approach
+
+## Conversational TCP
+
+### Overwhelming your target
+### Seeking Acknowledgement
+
+## I just want bytes!
+### byte[] methods
+## Future Plans
+### TPL Dataflow
+### Enumeration
+### Async
+### Handling drop outs
+
+
 
