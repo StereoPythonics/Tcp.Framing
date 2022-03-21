@@ -65,7 +65,7 @@ Documentation lies (especially mine), but unit tests don't! Find more working ex
 # The Details
 
 ## Contents
-The above should be enough to get you started, but if you're interested in the details here's a summary of what's included here:'
+The above should be enough to get you started, but if you're interested in the details here's a summary of what's included here:
 
 - [Object Serialization](#object-serialization)
     - System.Text.Json
