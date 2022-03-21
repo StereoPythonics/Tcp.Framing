@@ -67,17 +67,17 @@ Documentation lies (especially mine), but unit tests don't! Find more working ex
 ## Contents
 The above should be enough to get you started, but if you're interested in the details here's a summary of what's included here:'
 
-- Object Serialization
+- [Object Serialization](#object-serialization)
     - System.Text.Json
     - Advice on rolling your own
-- Framing Approach
+- [Framing Approach](#framing-approach)
     - Length Prefixing
     - Start/End Markers
-- Conversational TCP
+- [Conversational TCP](#conversational-tcp)
     - Overwhelming your target
     - Seeking Acknowledgement
-- Screw the streams! I just want bytes!
-- Future Plans
+- [Screw the streams! I just want bytes!](#screw-the-streams-i-just-want-bytes)
+- [Future Plans](#future-plans)
     - TPL Dataflow
     - Enumeration
     - Async
