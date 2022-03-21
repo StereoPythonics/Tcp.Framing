@@ -110,30 +110,30 @@ var streamer = new ObjectStreamer<ExampleTestObject>(serverNetworkStream, new Yo
 
 ## Framing Approach
 It's hard to work with raw network streams, you can request groups of bytes arbitrarily, but there's no inbuilt mechanism for grouping those bytes as descrete messages / objects.
-Framing allows us to wrap an arbitrary set of bytes with identifying information enabling structured retrieval
+Framing allows us to wrap an arbitrary set of bytes with identifying information enabling structured retrieval.
 
 ### Length Prefixing
-Specifically Tcp.Framing makes use of length prefixing to frame byte groups. Length prefixing uses some bytes befor a message to describe the total message body length, allowing a reader to first read the a set prefix bytes to get the body length, and then use the length to request the whole message body in one go.
+Specifically Tcp.Framing uses length prefixing to frame byte groups. Length prefixing uses some bytes before a message body to describe the expected message body length. This allows a reader to first read the prefix bytes to get the body length, and then use this length to request the whole message body in one go.
 
 As a simplified and hypothetical example, we could use length prefixing to send integers in a stream of arabic numerals.
 
-For example ```12345678912345678912``` would translate to the messages:
+For example ```123456789123456789123``` would translate to the messages:
 
-```(1)[2], (3)[456], (7)[8912345], (6)[78912]``` where ```(length prefix)[body]``` represents each prefix and message body.
+```(1)[2], (3)[456], (7)[8912345], (6)[789123]``` where ```(length prefix)[body]``` represents each prefix and message body.
 
-In TCP.Framing, 4 bytes are dedicated to encoding the body length, these are parsed as a signed int giving a maximum message body length of int.maxValue (~2.1GB). if your messages are larger than this, then you have bigger problems. 
+In Tcp.Framing, a standard prefix of 4 bytes is used to encode the message body length, these bytes are parsed as a signed int giving a maximum message body length of int.maxValue (~2.1GB). If your messages are larger than this, then you have bigger problems. 
 
-As a convention, this int is encoded/decoded as little endian regardless of system endianess to ensure cross-device compatibility.
+As a convention, this signed int is encoded/decoded as little-endian regardless of system endianness to ensure cross-device compatibility.
 
-for example a 5 byte message body ```A1 B2 C3 D4 E5``` would have be transmitted as:
+for example a 5 byte message body ```A1 B2 C3 D4 E5``` would have be framed as:
 
 ```00 00 00 05 A1 B2 C3 D4 E5``` where ```00 00 00 05``` is the 4 byte length prefix.
 
 ### Start/End Markers
 
-In addition to length prefixing, TCP.Framing also makes use of message start and end markers for error detection purposes only (unbounded messages are not supported).
+In addition to length prefixing, TCP.Framing also makes use of message start and end markers for error detection purposes. (unbounded message framing using bounding markers is not supported)
 
-Even with TCP, bytes can go missing if one machine overwhelms the other. Tcp.Framing uses arbitrary byte patterns to mark the expected start and end of a frame, checks for these when reading messages from a stream, and will throw if the expected markers are missing.
+Even with TCP, bytes can go missing if one machine overwhelms another with data. Tcp.Framing uses arbitrary byte patterns to mark the expected start and end of a frame, checks for these when reading messages from a stream, and will throw if the expected markers are missing.
 
 For example, with arbitrary frame markers ```AA BB CC DD```(start) and ```DD CC BB AA```(end) the prior 5 byte message body ```A1 B2 C3 D4 E5``` would be fully framed as:
 
@@ -143,37 +143,35 @@ For example, with arbitrary frame markers ```AA BB CC DD```(start) and ```DD CC 
 
 ### Overwhelming your target
 
-TCP does a great job of ensuring all your bytes make it over the wire. However in some scenarios, a device can overwhelm another if stream write-rate > read-rate. There's a limit to how much data can buffer between the sender and reciever before something gives, and rather than expose you to the gritty details around Socket Buffer Sizes, Windows and Bandwidth-Delay Products 
+The TCP protocol does a great job of ensuring all your bytes make it over the wire. However in some scenarios, a device can eventually overwhelm another if stream write-rate is greater than the read-rate. There's a limit to how much data can buffer between the sender and reciever before something gives, and rather than expose you to the gritty details of tuning TCP Socket Buffer Sizes, Windows and understanding Bandwidth-Delay Products, this library handles this concern through bidirectional acknowedgement at the code level.
 
 ### Seeking Acknowledgement
 
-To prevent an overflowing buildup of in-flight messages, TCP.Framing uses bi-directional communication between the message writing and message reading code to ensure they're running at the same rate. This is a lot like the interaction of reciting a number over the phone:
- ('Ok it's 06789',"yep",'123', "yep", '456', "ok thanks")
+To prevent an overflowing buildup of in-flight messages, TCP.Framing uses bi-directional communication between the message writing and message reading code to ensure they're running at roughly the same rate. This is a lot like the interaction of reciting a number over the phone:
 
-You code for this simple and can be seen in ```AcknowledgedBlobStreamer.cs```
+- ('Ok my number is 06789',"yep",'123', "yep", '456', "ok thanks")
+
+The code for this is simple and can be seen in ```AcknowledgedBlobStreamer.cs```
 
 ```csharp
-    
-
-    public void WriteBlob(ReadOnlySpan<byte> inputBlob)
-    {
-        _streamWriter.WriteBlobAsFrame(inputBlob, _stream);
-        WaitForBlobAcknowledgement(); //blocks until an acknowledgement is recieved
-    }
-
-    public byte[] ReadBlob()
-    {
-        byte[] returnable = _streamWriter.ReadFrameAsBlob(_stream);
-        SendBlobAcknowledgement();
-        return returnable;
-    }
+public void WriteBlob(ReadOnlySpan<byte> inputBlob)
+{
+    _streamWriter.WriteBlobAsFrame(inputBlob, _stream);
+    WaitForBlobAcknowledgement(); //blocks until an acknowledgement is recieved
+}
+public byte[] ReadBlob()
+{
+    byte[] returnable = _streamWriter.ReadFrameAsBlob(_stream);
+    SendBlobAcknowledgement();
+    return returnable;
+}
 ```
 
 ## Screw the streams! I just want bytes!
 
 Ok, so streams aside, you just want access to the framing methods. That's fine.
 
-Framing Approach classes like ```LPrefixAndMarkersBlobFramer.cs``` implement the IBlobFramer interface so you can get byte arrays if you want.
+Framing Approach classes like ```LPrefixAndMarkersBlobFramer.cs``` implement the ```IBlobFramer``` interface so you can get byte arrays if you want.
 
 ```csharp
 public interface IBlobFramer
@@ -183,9 +181,26 @@ public interface IBlobFramer
 }
 ```
 
+In many cases this will wrap athe ```IFramedBlobStreamWriter``` methods, using a temorary MemoryStream to get your bytes.
+
+```csharp
+public byte[] FrameBlob(ReadOnlySpan<byte> input)
+{
+    using MemoryStream ms = new MemoryStream();
+    FrameBlob(input,ms);
+    return ms.ToArray();
+}
+public byte[] UnframeBlob(ReadOnlySpan<byte> input)
+{
+    using MemoryStream ms = new MemoryStream(input.ToArray());
+    return UnframeBlob(ms);
+}
+```
+
 ## Future Plans
 The following are a work in progress. Async and Enumeration probably belong in this package. TPL dataflow integration will hook into some other dotnet packages and should probably have it's own TCP.Framing.Dataflow package.
 ### TPL Dataflow
+TPL dataflow is magic and a great way of dealing with message flows asynchronously, Adding dataflow integration is high on my list.
 ### Enumeration
 
 I love working with LINQ, with the new batching methods it would be really cool to have something like
@@ -194,11 +209,10 @@ clientObjectStreamer.EnumerateObjects();
 ```
 that might yield transmitted objecs into an unbounded IEnumerable<exampleObject> that I can utilize through LINQ pipelining.
 ### Async
-It's crazy not to have async methods for interacting with IO, Expect something like 
+It's crazy not to have async methods for interacting with IO, Expect something like this in the future.
 ```csharp
 clientObjectStreamer.ReadObjectAsync();
 ```
-in the future!
 
 ### Handling drop outs
 There's zero provision in this code for real world connectivity issues and dropouts. There needs to be!
