@@ -11,7 +11,7 @@ public class ObjectStreamer<T> : IObjectStreamer<T>
         }
 
         _serializer = serializer ?? new DefaultJsonSerializer<T>();
-        _blobStreamer = blobStreamer ?? new AcknowledgedBlobStreamer(stream,new SimpleBlobFramer());
+        _blobStreamer = blobStreamer ?? new AcknowledgedBlobStreamer(stream,new LPrefixAndMarkersBlobFramer());
     }
     public T ReadObject() => _serializer.Deserialize(_blobStreamer.ReadBlob());
     public void WriteObject(T input) => _blobStreamer.WriteBlob(_serializer.Serialize(input));

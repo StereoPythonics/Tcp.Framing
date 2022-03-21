@@ -12,7 +12,7 @@ public class RoundTripAcknowledgedBlobStreamingTests
     {
         byte[] testInputBlob = Encoding.ASCII.GetBytes("Test Blob");
         byte[] testOutputBlob = new byte[0];
-        IFramedBlobStreamWriter streamWriter = new SimpleBlobFramer();
+        IFramedBlobStreamWriter streamWriter = new LPrefixAndMarkersBlobFramer();
 
         TcpListener listener = new TcpListener(IPAddress.Parse("127.0.0.1"),1234);
         listener.Start();

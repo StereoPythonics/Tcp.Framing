@@ -12,17 +12,16 @@ public class AcknowledgedBlobStreamer : IBlobStreamer
         _stream = stream;
         _streamWriter = streamWriter;
     }
+    public void WriteBlob(ReadOnlySpan<byte> inputBlob)
+    {
+        _streamWriter.WriteBlobAsFrame(inputBlob, _stream);
+        WaitForBlobAcknowledgement();
+    }
     public byte[] ReadBlob()
     {
         byte[] returnable = _streamWriter.ReadFrameAsBlob(_stream);
         SendBlobAcknowledgement();
         return returnable;
-    }
-
-    public void WriteBlob(ReadOnlySpan<byte> inputBlob)
-    {
-        _streamWriter.WriteBlobAsFrame(inputBlob, _stream);
-        WaitForBlobAcknowledgement();
     }
 
     public void SendBlobAcknowledgement()
