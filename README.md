@@ -181,7 +181,7 @@ public interface IBlobFramer
 }
 ```
 
-In many cases this will wrap athe ```IFramedBlobStreamWriter``` methods, using a temorary MemoryStream to get your bytes.
+In many cases this will wrap the ```IFramedBlobStreamWriter``` methods, using a temorary MemoryStream to get your bytes.
 
 ```csharp
 public byte[] FrameBlob(ReadOnlySpan<byte> input)
