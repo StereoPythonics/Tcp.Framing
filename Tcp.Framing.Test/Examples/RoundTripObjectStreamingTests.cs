@@ -54,3 +54,39 @@ public class RoundTripObjectStreamingTests
         Enumerable.Range(0,100).ToList().ForEach(i => Assert.True(input.Equals(clientObjectStreamer.ReadObject())));
     }
 }
+public class TestNetworkStreamBuilder
+{   
+    public static TestNetworkStreamBuilder Instance { get {
+        instance ??= new TestNetworkStreamBuilder();
+        return instance;
+    }}
+    static TestNetworkStreamBuilder instance;
+    static int runningPort = 5678;
+    private TestNetworkStreamBuilder(){
+        runningPort = 5678;
+    }
+    public static TestStreamPair GetTestStreamPair()
+    {
+        NetworkStream returnableListener = null;
+        NetworkStream returnableClient;
+        TcpListener listener = new TcpListener(IPAddress.Parse("127.0.0.1"),runningPort);
+        listener.Start();
+
+        var getListenerStream = Task.Run(() => {
+            TcpClient client = listener.AcceptTcpClient();
+            returnableListener = client.GetStream();
+        });
+
+        using TcpClient readClient = new TcpClient();
+        readClient.Connect("127.0.0.1",runningPort);
+        returnableClient = readClient.GetStream();
+        getListenerStream.Wait();
+        return new TestStreamPair(){ListenerStream = returnableListener, ClientStream = returnableClient};
+    }  
+    public class TestStreamPair
+    {
+        public NetworkStream ListenerStream;
+        public NetworkStream ClientStream;
+    }
+
+}

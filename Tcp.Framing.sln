@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tcp.Framing", "Tcp.Framing\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tcp.Framing.Test", "Tcp.Framing.Test\Tcp.Framing.Test.csproj", "{4985D401-25DF-48D6-B9CF-A6865B3B8C61}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tcp.Framing.Dataflow", "Tcp.Framing.Dataflow\Tcp.Framing.Dataflow.csproj", "{DBEDED1F-45B6-4706-803F-285646339233}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tcp.Framing.Dataflow.Test", "Tcp.Framing.Dataflow.Test\Tcp.Framing.Dataflow.Test.csproj", "{3C479BBA-FB38-4491-90C9-A52BB69EC001}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +28,13 @@ Global
 		{4985D401-25DF-48D6-B9CF-A6865B3B8C61}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4985D401-25DF-48D6-B9CF-A6865B3B8C61}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4985D401-25DF-48D6-B9CF-A6865B3B8C61}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DBEDED1F-45B6-4706-803F-285646339233}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DBEDED1F-45B6-4706-803F-285646339233}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DBEDED1F-45B6-4706-803F-285646339233}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DBEDED1F-45B6-4706-803F-285646339233}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C479BBA-FB38-4491-90C9-A52BB69EC001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C479BBA-FB38-4491-90C9-A52BB69EC001}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C479BBA-FB38-4491-90C9-A52BB69EC001}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C479BBA-FB38-4491-90C9-A52BB69EC001}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

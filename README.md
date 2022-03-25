@@ -1,5 +1,5 @@
 # Tcp.Framing
-A simple, opinionated yet extensible library for pushing stuff over TCP streams.
+A simple, opinionated, yet extensible library for pushing stuff over TCP streams.
 
 ## At a glance
 
