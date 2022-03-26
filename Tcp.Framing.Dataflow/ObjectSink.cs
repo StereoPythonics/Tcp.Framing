@@ -14,6 +14,7 @@ public class ObjectSink<T> : ISink<T>
         SinkBlock = new BufferBlock<T>();
         _objectStreamer = new ObjectStreamer<T>(stream);
         _streamWriterBlock = new ActionBlock<T>(message => _objectStreamer.WriteObject(message));
+        SinkBlock.LinkTo(_streamWriterBlock);
     }
 }
 public class ObjectSource<T> : ISource<T>
