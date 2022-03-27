@@ -1,52 +1,52 @@
 ﻿using System.Text;
 
 namespace Tcp.Framing;
-public class LPrefixAndMarkersBlobFramer : IBlobFramer, IFramedBlobStreamWriter
+public class LPrefixAndMarkersBlobFramer : IAsyncBlobFramer, IAsyncFramedBlobStreamWriter
 {
     public const int bytesPerInt = 4;
     public static byte[] FrameStartMarker {get;} = Encoding.ASCII.GetBytes("StartFrame");
     public static byte[] FrameEndMarker {get;} = Encoding.ASCII.GetBytes("EndFrame");
 
-    public byte[] FrameBlob(ReadOnlySpan<byte> input)
+    public async Task<byte[]> FrameBlob(byte[] input)
     {
         using MemoryStream ms = new MemoryStream();
-        FrameBlob(input,ms);
+        await FrameBlobAsync(input,ms);
         return ms.ToArray();
     }
-    public byte[] UnframeBlob(ReadOnlySpan<byte> input)
+    public async Task<byte[]> UnframeBlob(byte[] input)
     {
         using MemoryStream ms = new MemoryStream(input.ToArray());
-        return UnframeBlob(ms);
+        return await UnframeBlobAsync(ms);
     }
 
-    public void WriteBlobAsFrame(ReadOnlySpan<byte> bytes, Stream stream)
+    public async Task WriteBlobAsFrame(byte[] bytes, Stream stream)
     {
-        FrameBlob(bytes,stream);
+        await FrameBlobAsync(bytes,stream);
     }
-    public byte[] ReadFrameAsBlob(Stream stream)
+    public async Task<byte[]> ReadFrameAsBlob(Stream stream)
     {
-        return UnframeBlob(stream);
+        return await UnframeBlobAsync(stream);
     }
     
-    public static void FrameBlob(ReadOnlySpan<byte> input, Stream stream)
+    public static async Task FrameBlobAsync(byte[] input, Stream stream)
     {
-        stream.Write(FrameStartMarker);
-        stream.Write(EndianAwareByteEncodeInt(input.Length));
-        stream.Write(input);
-        stream.Write(FrameEndMarker);
+        await stream.WriteAsync(FrameStartMarker);
+        await stream.WriteAsync(EndianAwareByteEncodeInt(input.Length));
+        await stream.WriteAsync(input);
+        await stream.WriteAsync(FrameEndMarker);
     }
-    public static byte[] UnframeBlob(Stream stream)
+    public static async Task<byte[]> UnframeBlobAsync(Stream stream)
     {
-        ConfirmFramedMessageStart(stream);
-        int frameBodyLength = GetExpectedFrameBodyLength(stream);
-        byte[] returnable = stream.Read(frameBodyLength);
-        ConfirmFramedMessageEnd(stream);
+        await ConfirmFramedMessageStartAsync(stream);
+        int frameBodyLength = await GetExpectedFrameBodyLengthAsync(stream);
+        byte[] returnable = await stream.ReadAsync(frameBodyLength);
+        await ConfirmFramedMessageEnd(stream);
         return returnable;
     }
     
-    public static void ConfirmFramedMessageStart(Stream stream)
+    public static async Task ConfirmFramedMessageStartAsync(Stream stream)
     {
-        var check = stream.Read(FrameStartMarker.Length);
+        var check = await stream.ReadAsync(FrameStartMarker.Length);
         if(!check.SequenceEqual(FrameStartMarker))
         {
             throw new InvalidDataException(
@@ -65,13 +65,13 @@ public class LPrefixAndMarkersBlobFramer : IBlobFramer, IFramedBlobStreamWriter
             BitConverter.ToInt32(bytes) : 
             BitConverter.ToInt32(bytes.Reverse().ToArray());
     }
-    public static int GetExpectedFrameBodyLength(Stream stream)
+    public static async Task<int> GetExpectedFrameBodyLengthAsync(Stream stream)
     {
-        return EndianAwareByteDecodeInt(stream.Read(bytesPerInt));
+        return EndianAwareByteDecodeInt(await stream.ReadAsync(bytesPerInt));
     }
-    public static void ConfirmFramedMessageEnd(Stream stream)
+    public static async Task ConfirmFramedMessageEnd(Stream stream)
     {
-        var check = stream.Read(FrameEndMarker.Length);
+        var check = await  stream.ReadAsync(FrameEndMarker.Length);
         if(!check.SequenceEqual(FrameEndMarker))
         {
             throw new InvalidDataException(
@@ -80,7 +80,4 @@ public class LPrefixAndMarkersBlobFramer : IBlobFramer, IFramedBlobStreamWriter
                 but got {Encoding.ASCII.GetString(check)}");
         }
     }
-
-    
-
 }

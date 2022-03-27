@@ -3,6 +3,12 @@ namespace Tcp.Framing;
 
 public interface IBlobFramer
 {
-    byte[] FrameBlob(ReadOnlySpan<byte> bytes);
-    byte[] UnframeBlob(ReadOnlySpan<byte> bytes);
+    byte[] FrameBlob(byte[] bytes);
+    byte[] UnframeBlob(byte[] bytes);
+}
+
+public interface IAsyncBlobFramer
+{
+    Task<byte[]> FrameBlob(byte[] bytes);
+    Task<byte[]> UnframeBlob(byte[] bytes);
 }

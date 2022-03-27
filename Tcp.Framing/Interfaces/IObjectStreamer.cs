@@ -2,6 +2,12 @@ namespace Tcp.Framing;
 
 public interface IObjectStreamer<T>
 {
-    T ReadObject();
-    void WriteObject(T input);
+    Task<T> ReadObject();
+    Task WriteObject(T input);
+}
+
+public interface IAsyncObjectStreamer<T>
+{
+    Task<T> ReadObject();
+    Task WriteObject(T input);
 }

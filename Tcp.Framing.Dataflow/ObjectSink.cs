@@ -13,7 +13,7 @@ public class ObjectSink<T> : ISink<T>
     {
         SinkBlock = new BufferBlock<T>();
         _objectStreamer = new ObjectStreamer<T>(stream);
-        _streamWriterBlock = new ActionBlock<T>(message => _objectStreamer.WriteObject(message));
+        _streamWriterBlock = new ActionBlock<T>(async message => await _objectStreamer.WriteObject(message));
         SinkBlock.LinkTo(_streamWriterBlock);
     }
 }
@@ -26,11 +26,11 @@ public class ObjectSource<T> : ISource<T>
         SourceBlock = new BroadcastBlock<T>(m => m);
         _objectStreamer = new ObjectStreamer<T>(stream);
 
-        Task.Run(() =>
+        Task.Run(async () =>
         {
             while(true)
             {
-                SourceBlock.Post(_objectStreamer.ReadObject());
+                SourceBlock.Post(await _objectStreamer.ReadObject());
             }
         });
     }

@@ -21,4 +21,17 @@ public class SourceSinkTests
         var output = testSource.SourceBlock.Receive();
         Assert.Equal(input.TestString, output.TestString);
     }
+    [Fact]
+    public void ConfirmReverseRoundTrip()
+    {
+        var streamPair = TestNetworkStreamPairBuilder.GetTestStreamPair(1238);
+        
+        ISource<TestObject> testSource = new ObjectSource<TestObject>(streamPair.ClientStream);
+        ISink<TestObject> testSink = new ObjectSink<TestObject>(streamPair.ListenerStream);
+
+        var input = new TestObject(){TestString = "test123"};
+        testSink.SinkBlock.Post(input);
+        var output = testSource.SourceBlock.Receive();
+        Assert.Equal(input.TestString, output.TestString);
+    }
 }
