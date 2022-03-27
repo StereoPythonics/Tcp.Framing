@@ -1,5 +1,5 @@
 namespace Tcp.Framing;
-public class ObjectStreamer<T> : IObjectStreamer<T>
+public class ObjectStreamer<T> : IAsyncObjectStreamer<T>, IBlockingObjectStreamer<T>
 {
     IBlobSerializer<T> _serializer;
     IAsyncBlobStreamer _blobStreamer;
@@ -13,6 +13,8 @@ public class ObjectStreamer<T> : IObjectStreamer<T>
         _serializer = serializer ?? new DefaultJsonSerializer<T>();
         _blobStreamer = blobStreamer ?? new AcknowledgedBlobStreamer(stream,new LPrefixAndMarkersBlobFramer());
     }
-    public async Task<T> ReadObject() => _serializer.Deserialize(await _blobStreamer.ReadBlob());
-    public async Task WriteObject(T input) => await _blobStreamer.WriteBlob(_serializer.Serialize(input));
+    public async Task<T> ReadObjectAsync() => _serializer.Deserialize(await _blobStreamer.ReadBlob());
+    public async Task WriteObjectAsync(T input) => await _blobStreamer.WriteBlob(_serializer.Serialize(input));
+    public T ReadObject() => ReadObjectAsync().Result;
+    public void WriteObject(T input) => WriteObjectAsync(input).RunSynchronously();
 }
