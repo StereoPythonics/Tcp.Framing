@@ -9,13 +9,14 @@ public class RoundTripObjectStreamingTests
         ExampleTestObject input = new ExampleTestObject(){ExampleDouble = 1.609344, ExampleInt = 42, ExampleString = "Nice"};
         var streamPair = TestNetworkStreamPairBuilder.GetTestStreamPair(1235);
 
-        Task.Run(async () => {
-        IAsyncObjectStreamer<ExampleTestObject> serverObjectStreamer = new ObjectStreamer<ExampleTestObject>(streamPair.ListenerStream);
+        Task receive = Task.Run(async () => {
+        IObjectStreamer<ExampleTestObject> serverObjectStreamer = new ObjectStreamer<ExampleTestObject>(streamPair.ListenerStream);
         await serverObjectStreamer.WriteObjectAsync(input);
         });
 
-        IAsyncObjectStreamer<ExampleTestObject> clientObjectStreamer = new ObjectStreamer<ExampleTestObject>(streamPair.ClientStream);
+        IObjectStreamer<ExampleTestObject> clientObjectStreamer = new ObjectStreamer<ExampleTestObject>(streamPair.ClientStream);
         Assert.Equal(input, await clientObjectStreamer.ReadObjectAsync());
+        await receive;
     }
 
     [Fact]
@@ -24,11 +25,12 @@ public class RoundTripObjectStreamingTests
         ExampleTestObject input = new ExampleTestObject(){ExampleDouble = 1.609344, ExampleInt = 42, ExampleString = "Nice"};
         var streamPair = TestNetworkStreamPairBuilder.GetTestStreamPair(1236);
 
-        Task.Run(() => {
-            IAsyncObjectStreamer<ExampleTestObject> serverObjectStreamer = new ObjectStreamer<ExampleTestObject>(streamPair.ListenerStream);
+        Task receive = Task.Run(() => {
+            IObjectStreamer<ExampleTestObject> serverObjectStreamer = new ObjectStreamer<ExampleTestObject>(streamPair.ListenerStream);
             Enumerable.Range(0,100).ToList().ForEach(async i => await serverObjectStreamer.WriteObjectAsync(input));
         });
-        IAsyncObjectStreamer<ExampleTestObject> clientObjectStreamer = new ObjectStreamer<ExampleTestObject>(streamPair.ClientStream);
+        IObjectStreamer<ExampleTestObject> clientObjectStreamer = new ObjectStreamer<ExampleTestObject>(streamPair.ClientStream);
         Enumerable.Range(0,100).ToList().ForEach(async i => Assert.True(input.Equals(await clientObjectStreamer.ReadObjectAsync())));
+        await receive;
     }
 }

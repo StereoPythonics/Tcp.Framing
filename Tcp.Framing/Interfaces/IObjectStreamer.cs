@@ -1,6 +1,6 @@
 namespace Tcp.Framing;
 
-public interface IAsyncObjectStreamer<T>
+public interface IObjectStreamer<T>
 {
     Task<T> ReadObjectAsync();
     Task WriteObjectAsync(T input);

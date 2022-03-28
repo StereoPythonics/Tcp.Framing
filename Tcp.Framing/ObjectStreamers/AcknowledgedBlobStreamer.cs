@@ -2,12 +2,12 @@ using System.Text;
 
 namespace Tcp.Framing;
 
-public class AcknowledgedBlobStreamer : IAsyncBlobStreamer
+public class AcknowledgedAsyncBlobStreamer : IBlobStreamer
 {
     private byte[] _blobAcknowledgement = Encoding.ASCII.GetBytes("BlobAcknowledged");
     private Stream _stream;
-    private IAsyncFramedBlobStreamWriter _streamWriter;
-    public AcknowledgedBlobStreamer(Stream stream, IAsyncFramedBlobStreamWriter streamWriter)
+    private IFramedBlobStreamWriter _streamWriter;
+    public AcknowledgedAsyncBlobStreamer(Stream stream, IFramedBlobStreamWriter streamWriter)
     {
         _stream = stream;
         _streamWriter = streamWriter;

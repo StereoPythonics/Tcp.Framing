@@ -7,8 +7,8 @@ namespace Tcp.Framing.Dataflow;
 public class BatchedObjectSource<T> : ISource<T>
 {
     public BroadcastBlock<T> SourceBlock { get; }
-    private IAsyncObjectStreamer<T[]> _objectStreamer;
-    public BatchedObjectSource(Stream stream, IAsyncObjectStreamer<T[]> objectStreamer = null)
+    private IObjectStreamer<T[]> _objectStreamer;
+    public BatchedObjectSource(Stream stream, IObjectStreamer<T[]> objectStreamer = null)
     {
         SourceBlock = new BroadcastBlock<T>(m => m);
         _objectStreamer ??= new ObjectStreamer<T[]>(stream);

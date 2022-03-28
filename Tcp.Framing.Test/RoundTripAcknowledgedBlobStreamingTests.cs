@@ -16,14 +16,14 @@ public class RoundTripAcknowledgedBlobStreamingTests
 
         var streamPair = TestNetworkStreamPairBuilder.GetTestStreamPair(1234);
 
-        Task.Run(async () => {
-            IAsyncBlobStreamer inputBlobStreamer = new AcknowledgedBlobStreamer(streamPair.ListenerStream,streamWriter);
+        Task receive = Task.Run(async () => {
+            IBlobStreamer inputBlobStreamer = new AcknowledgedAsyncBlobStreamer(streamPair.ListenerStream,streamWriter);
             await inputBlobStreamer.WriteBlob(testInputBlob);
         });
 
-        IAsyncBlobStreamer outputBlobStreamer = new AcknowledgedBlobStreamer(streamPair.ClientStream,streamWriter);
+        IBlobStreamer outputBlobStreamer = new AcknowledgedAsyncBlobStreamer(streamPair.ClientStream,streamWriter);
         testOutputBlob = await outputBlobStreamer.ReadBlob();
-
+        await receive;
         Assert.True(testInputBlob.SequenceEqual(testOutputBlob));
     }
 }

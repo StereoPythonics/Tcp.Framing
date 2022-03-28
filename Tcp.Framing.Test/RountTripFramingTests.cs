@@ -6,7 +6,7 @@ public class RoundTripFramingTests
     [Fact]
     public async Task ConfirmRountTripStreamSuccess()
     {
-        IAsyncFramedBlobStreamWriter blobStream = new LPrefixAndMarkersBlobFramer();
+        IFramedBlobStreamWriter blobStream = new LPrefixAndMarkersBlobFramer();
         using MemoryStream ms = new MemoryStream();
         byte[] inputBytes = Encoding.ASCII.GetBytes("ExampleTestString");
 
@@ -21,7 +21,7 @@ public class RoundTripFramingTests
     [Fact]
     public async Task ConfirmMissingStartFailure()
     {
-        IAsyncBlobFramer blobFramer = new LPrefixAndMarkersBlobFramer();
+        IBlobFramer blobFramer = new LPrefixAndMarkersBlobFramer();
         byte[] inputBytes = Encoding.ASCII.GetBytes("ExampleTestString");
 
         byte[] framedBytes = (await blobFramer.FrameBlob(inputBytes)).Skip(1).ToArray();
@@ -35,7 +35,7 @@ public class RoundTripFramingTests
     [Fact]
     public async Task ConfirmTruncatedEndFailure()
     {
-        IAsyncBlobFramer blobFramer = new LPrefixAndMarkersBlobFramer();
+        IBlobFramer blobFramer = new LPrefixAndMarkersBlobFramer();
         byte[] inputBytes = Encoding.ASCII.GetBytes("ExampleTestString");
 
         byte[] framedBytes = await blobFramer.FrameBlob(inputBytes);

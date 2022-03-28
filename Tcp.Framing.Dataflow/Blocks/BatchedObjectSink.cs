@@ -9,7 +9,7 @@ public class BatchedObjectSink<T> : ISink<T>
     private BatchBlock<T> batchBlock;
     private ActionBlock<T[]> _streamWriterBlock;
     private ObjectStreamer<T[]> _objectStreamer;
-    public BatchedObjectSink(Stream stream, IAsyncObjectStreamer<T[]> objectStreamer = null, int batchSize = 100)
+    public BatchedObjectSink(Stream stream, IObjectStreamer<T[]> objectStreamer = null, int batchSize = 100)
     {
         SinkBlock = new BufferBlock<T>();
         batchBlock = new BatchBlock<T>(batchSize);

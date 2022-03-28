@@ -30,10 +30,10 @@ using System.Net;
 using Xunit;
 
 namespace Tcp.Framing.Test;
-public class RoundTripObjectStreamingTests
+public class TcpListenerClientExample
 {
     [Fact]
-    public void TestSingleObjectStreamingRoundTrip()
+    public void PassObjectThroughTcpSocket()
     {
         ExampleTestObject input = new ExampleTestObject(){ExampleDouble = 1.609344, ExampleInt = 42, ExampleString = "Nice"};
 
@@ -46,7 +46,7 @@ public class RoundTripObjectStreamingTests
             using TcpClient client = listener.AcceptTcpClient(); //blocks waiting for client connection
             using NetworkStream serverNetworkStream = client.GetStream();
 
-            IObjectStreamer<ExampleTestObject> serverObjectStreamer = new ObjectStreamer<ExampleTestObject>(serverNetworkStream);
+            IBlockingObjectStreamer<ExampleTestObject> serverObjectStreamer = new ObjectStreamer<ExampleTestObject>(serverNetworkStream);
             serverObjectStreamer.WriteObject(input);
         });
 
@@ -54,7 +54,7 @@ public class RoundTripObjectStreamingTests
         readClient.Connect("127.0.0.1",3456);
         using NetworkStream clientNetworkStream = readClient.GetStream();
 
-        IObjectStreamer<ExampleTestObject> clientObjectStreamer = new ObjectStreamer<ExampleTestObject>(clientNetworkStream);
+        IBlockingObjectStreamer<ExampleTestObject> clientObjectStreamer = new ObjectStreamer<ExampleTestObject>(clientNetworkStream);
         Assert.Equal(input,clientObjectStreamer.ReadObject());
     }
 }
