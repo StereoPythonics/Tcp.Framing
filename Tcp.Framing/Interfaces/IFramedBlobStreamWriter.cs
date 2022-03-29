@@ -2,6 +2,6 @@ namespace Tcp.Framing;
 
 public interface IFramedBlobStreamWriter
 {
-    Task WriteBlobAsFrame(byte[] bytes, Stream stream);
-    Task<byte[]> ReadFrameAsBlob(Stream stream);
+    Task WriteBlobAsFrame(byte[] bytes, Stream stream, CancellationToken cancellationToken = default);
+    Task<byte[]> ReadFrameAsBlob(Stream stream, CancellationToken cancellationToken = default);
 }

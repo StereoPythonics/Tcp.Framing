@@ -37,7 +37,7 @@ public class TcpListenerClientExample
     {
         ExampleTestObject input = new ExampleTestObject(){ExampleDouble = 1.609344, ExampleInt = 42, ExampleString = "Nice"};
 
-        
+        //Setup serverside listener
         TcpListener listener = new TcpListener(IPAddress.Parse("127.0.0.1"),3456);
         listener.Start();
 
@@ -50,10 +50,12 @@ public class TcpListenerClientExample
             serverObjectStreamer.WriteObject(input);
         });
 
+        //Setup client side connection
         using TcpClient readClient = new TcpClient();
         readClient.Connect("127.0.0.1",3456);
         using NetworkStream clientNetworkStream = readClient.GetStream();
 
+        //Confirm object passed through connection
         IBlockingObjectStreamer<ExampleTestObject> clientObjectStreamer = new ObjectStreamer<ExampleTestObject>(clientNetworkStream);
         Assert.Equal(input,clientObjectStreamer.ReadObject());
     }
@@ -77,6 +79,7 @@ The above should be enough to get you started, but if you're interested in the d
     - Overwhelming your target
     - Seeking Acknowledgement
 - [Screw the streams! I just want bytes!](#screw-the-streams-i-just-want-bytes)
+- [TPL Dataflow](#tpl-dataflow)
 - [Future Plans](#future-plans)
     - TPL Dataflow
     - Enumeration
@@ -90,6 +93,8 @@ The above should be enough to get you started, but if you're interested in the d
 Your objects need to end up as bytes somehow, and while inefficient, utf8 json is a good universal starting point.
 
 This library makes use of System.Text.Json to handle this, but does so through the ```IBlobSerializer``` interface to users to easily swap in their own implementiation.
+
+By default, GZip compression will be applied when serializing to blobs.
 
 ### Advice on rolling your own
 
@@ -151,18 +156,18 @@ To prevent an overflowing buildup of in-flight messages, TCP.Framing uses bi-dir
 
 - ('Ok my number is 06789',"yep",'123', "yep", '456', "ok thanks")
 
-The code for this is simple and can be seen in ```AcknowledgedBlobStreamer.cs```
+The code for this is simple and can be seen in ```AcknowledgedAsyncBlobStreamer.cs```
 
 ```csharp
-public void WriteBlob(ReadOnlySpan<byte> inputBlob)
+public async Task WriteBlob(byte[] inputBlob)
 {
-    _streamWriter.WriteBlobAsFrame(inputBlob, _stream);
-    WaitForBlobAcknowledgement(); //blocks until an acknowledgement is recieved
+    await _streamWriter.WriteBlobAsFrame(inputBlob, _stream);
+    await WaitForBlobAcknowledgement();
 }
-public byte[] ReadBlob()
+public async Task<byte[]> ReadBlob()
 {
-    byte[] returnable = _streamWriter.ReadFrameAsBlob(_stream);
-    SendBlobAcknowledgement();
+    byte[] returnable = await _streamWriter.ReadFrameAsBlob(_stream);
+    await SendBlobAcknowledgement();
     return returnable;
 }
 ```
@@ -176,31 +181,33 @@ Framing Approach classes like ```LPrefixAndMarkersBlobFramer.cs``` implement the
 ```csharp
 public interface IBlobFramer
 {
-    byte[] FrameBlob(ReadOnlySpan<byte> bytes);
-    byte[] UnframeBlob(ReadOnlySpan<byte> bytes);
+    Task<byte[]> FrameBlob(byte[] bytes);
+    Task<byte[]> UnframeBlob(byte[] bytes);
 }
 ```
 
 In many cases this will wrap the ```IFramedBlobStreamWriter``` methods, using a temorary MemoryStream to get your bytes.
 
 ```csharp
-public byte[] FrameBlob(ReadOnlySpan<byte> input)
+public async Task<byte[]> FrameBlob(byte[] input)
 {
     using MemoryStream ms = new MemoryStream();
-    FrameBlob(input,ms);
+    await FrameBlobAsync(input,ms);
     return ms.ToArray();
 }
-public byte[] UnframeBlob(ReadOnlySpan<byte> input)
+public async Task<byte[]> UnframeBlob(byte[] input)
 {
     using MemoryStream ms = new MemoryStream(input.ToArray());
-    return UnframeBlob(ms);
+    return await UnframeBlobAsync(ms);
 }
 ```
 
+## TPL Dataflow
+TPL dataflow is magic and a great way of dealing with message flows asynchronously, Adding dataflow integration is high on my list.
+
 ## Future Plans
 The following are a work in progress. Async and Enumeration probably belong in this package. TPL dataflow integration will hook into some other dotnet packages and should probably have it's own TCP.Framing.Dataflow package.
-### TPL Dataflow
-TPL dataflow is magic and a great way of dealing with message flows asynchronously, Adding dataflow integration is high on my list.
+
 ### Enumeration
 
 I love working with LINQ, with the new batching methods it would be really cool to have something like
@@ -208,11 +215,8 @@ I love working with LINQ, with the new batching methods it would be really cool 
 clientObjectStreamer.EnumerateObjects();
 ```
 that might yield transmitted objecs into an unbounded IEnumerable<exampleObject> that I can utilize through LINQ pipelining.
-### Async
-It's crazy not to have async methods for interacting with IO, Expect something like this in the future.
-```csharp
-clientObjectStreamer.ReadObjectAsync();
-```
+
+
 
 ### Handling drop outs
 There's zero provision in this code for real world connectivity issues and dropouts. There needs to be!

@@ -7,46 +7,46 @@ public class LPrefixAndMarkersBlobFramer : IBlobFramer, IFramedBlobStreamWriter
     public static byte[] FrameStartMarker {get;} = Encoding.ASCII.GetBytes("StartFrame");
     public static byte[] FrameEndMarker {get;} = Encoding.ASCII.GetBytes("EndFrame");
 
-    public async Task<byte[]> FrameBlob(byte[] input)
+    public async Task<byte[]> FrameBlob(byte[] input, CancellationToken cancellationToken = default)
     {
         using MemoryStream ms = new MemoryStream();
-        await FrameBlobAsync(input,ms);
+        await FrameBlobAsync(input,ms, cancellationToken);
         return ms.ToArray();
     }
-    public async Task<byte[]> UnframeBlob(byte[] input)
+    public async Task<byte[]> UnframeBlob(byte[] input, CancellationToken cancellationToken = default)
     {
         using MemoryStream ms = new MemoryStream(input.ToArray());
-        return await UnframeBlobAsync(ms);
+        return await UnframeBlobAsync(ms, cancellationToken);
     }
 
-    public async Task WriteBlobAsFrame(byte[] bytes, Stream stream)
+    public async Task WriteBlobAsFrame(byte[] bytes, Stream stream, CancellationToken cancellationToken = default)
     {
-        await FrameBlobAsync(bytes,stream);
+        await FrameBlobAsync(bytes,stream, cancellationToken);
     }
-    public async Task<byte[]> ReadFrameAsBlob(Stream stream)
+    public async Task<byte[]> ReadFrameAsBlob(Stream stream, CancellationToken cancellationToken = default)
     {
-        return await UnframeBlobAsync(stream);
+        return await UnframeBlobAsync(stream, cancellationToken);
     }
     
-    public static async Task FrameBlobAsync(byte[] input, Stream stream)
+    public static async Task FrameBlobAsync(byte[] input, Stream stream, CancellationToken cancellationToken = default)
     {
-        await stream.WriteAsync(FrameStartMarker);
-        await stream.WriteAsync(EndianAwareByteEncodeInt(input.Length));
-        await stream.WriteAsync(input);
-        await stream.WriteAsync(FrameEndMarker);
+        await stream.WriteAsync(FrameStartMarker, cancellationToken);
+        await stream.WriteAsync(EndianAwareByteEncodeInt(input.Length), cancellationToken);
+        await stream.WriteAsync(input, cancellationToken);
+        await stream.WriteAsync(FrameEndMarker, cancellationToken);
     }
-    public static async Task<byte[]> UnframeBlobAsync(Stream stream)
+    public static async Task<byte[]> UnframeBlobAsync(Stream stream, CancellationToken cancellationToken = default)
     {
-        await ConfirmFramedMessageStartAsync(stream);
-        int frameBodyLength = await GetExpectedFrameBodyLengthAsync(stream);
-        byte[] returnable = await stream.ReadAsync(frameBodyLength);
-        await ConfirmFramedMessageEnd(stream);
+        await ConfirmFramedMessageStartAsync(stream, cancellationToken);
+        int frameBodyLength = await GetExpectedFrameBodyLengthAsync(stream, cancellationToken);
+        byte[] returnable = await stream.ReadAsync(frameBodyLength, cancellationToken);
+        await ConfirmFramedMessageEnd(stream, cancellationToken);
         return returnable;
     }
     
-    public static async Task ConfirmFramedMessageStartAsync(Stream stream)
+    public static async Task ConfirmFramedMessageStartAsync(Stream stream, CancellationToken cancellationToken = default)
     {
-        var check = await stream.ReadAsync(FrameStartMarker.Length);
+        var check = await stream.ReadAsync(FrameStartMarker.Length, cancellationToken);
         if(!check.SequenceEqual(FrameStartMarker))
         {
             throw new InvalidDataException(
@@ -65,13 +65,13 @@ public class LPrefixAndMarkersBlobFramer : IBlobFramer, IFramedBlobStreamWriter
             BitConverter.ToInt32(bytes) : 
             BitConverter.ToInt32(bytes.Reverse().ToArray());
     }
-    public static async Task<int> GetExpectedFrameBodyLengthAsync(Stream stream)
+    public static async Task<int> GetExpectedFrameBodyLengthAsync(Stream stream, CancellationToken cancellationToken = default)
     {
-        return EndianAwareByteDecodeInt(await stream.ReadAsync(bytesPerInt));
+        return EndianAwareByteDecodeInt(await stream.ReadAsync(bytesPerInt, cancellationToken));
     }
-    public static async Task ConfirmFramedMessageEnd(Stream stream)
+    public static async Task ConfirmFramedMessageEnd(Stream stream, CancellationToken cancellationToken = default)
     {
-        var check = await  stream.ReadAsync(FrameEndMarker.Length);
+        var check = await  stream.ReadAsync(FrameEndMarker.Length, cancellationToken);
         if(!check.SequenceEqual(FrameEndMarker))
         {
             throw new InvalidDataException(

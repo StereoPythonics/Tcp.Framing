@@ -9,10 +9,10 @@ public static class SimpleStreamInteractions
         return returnable;
     }
 
-    public static async Task<byte[]> ReadAsync(this Stream stream, int count)
+    public static async Task<byte[]> ReadAsync(this Stream stream, int count, CancellationToken cancellationToken = default)
     {
         byte[] returnable = new byte[count];
-        await stream.ReadAsync(returnable, 0, count);
+        await stream.ReadAsync(returnable, 0, count, cancellationToken);
         return returnable;
     }
 }

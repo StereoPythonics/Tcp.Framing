@@ -10,7 +10,7 @@ public class TcpListenerClientExample
     {
         ExampleTestObject input = new ExampleTestObject(){ExampleDouble = 1.609344, ExampleInt = 42, ExampleString = "Nice"};
 
-        
+        //Setup serverside listener
         TcpListener listener = new TcpListener(IPAddress.Parse("127.0.0.1"),3456);
         listener.Start();
 
@@ -23,10 +23,12 @@ public class TcpListenerClientExample
             serverObjectStreamer.WriteObject(input);
         });
 
+        //Setup client side connection
         using TcpClient readClient = new TcpClient();
         readClient.Connect("127.0.0.1",3456);
         using NetworkStream clientNetworkStream = readClient.GetStream();
 
+        //Confirm object passed through connection
         IBlockingObjectStreamer<ExampleTestObject> clientObjectStreamer = new ObjectStreamer<ExampleTestObject>(clientNetworkStream);
         Assert.Equal(input,clientObjectStreamer.ReadObject());
     }

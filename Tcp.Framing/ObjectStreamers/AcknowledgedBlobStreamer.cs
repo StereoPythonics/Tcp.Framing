@@ -13,27 +13,27 @@ public class AcknowledgedAsyncBlobStreamer : IBlobStreamer
         _streamWriter = streamWriter;
     }
 
-     public async Task WriteBlob(byte[] inputBlob)
+    public async Task WriteBlob(byte[] inputBlob, CancellationToken cancellationToken = default)
     {
-        await _streamWriter.WriteBlobAsFrame(inputBlob, _stream);
-        await WaitForBlobAcknowledgement();
+        await _streamWriter.WriteBlobAsFrame(inputBlob, _stream, cancellationToken);
+        await WaitForBlobAcknowledgement(cancellationToken);
     }
-    public async Task<byte[]> ReadBlob()
+    public async Task<byte[]> ReadBlob(CancellationToken cancellationToken = default)
     {
-        byte[] returnable = await _streamWriter.ReadFrameAsBlob(_stream);
-        await SendBlobAcknowledgement();
+        byte[] returnable = await _streamWriter.ReadFrameAsBlob(_stream, cancellationToken);
+        await SendBlobAcknowledgement(cancellationToken);
         return returnable;
     }
-    public async Task SendBlobAcknowledgement()
+    public async Task SendBlobAcknowledgement(CancellationToken cancellationToken = default)
     {
-        await _stream.WriteAsync(_blobAcknowledgement);
+        await _stream.WriteAsync(_blobAcknowledgement, cancellationToken);
     }
 
     public async 
-    Task WaitForBlobAcknowledgement()
+    Task WaitForBlobAcknowledgement(CancellationToken cancellationToken = default)
     {
         byte[] check = new byte[_blobAcknowledgement.Length];
-        await _stream.ReadAsync(check, 0, _blobAcknowledgement.Length);
+        await _stream.ReadAsync(check, 0, _blobAcknowledgement.Length, cancellationToken);
         if(! check.SequenceEqual(_blobAcknowledgement))
         {
             throw new InvalidDataException(@$"Incorrect blob acknowledgement recieved! 
