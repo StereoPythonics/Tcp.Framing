@@ -71,6 +71,7 @@ The above should be enough to get you started, but if you're interested in the d
 
 - [Object Serialization](#object-serialization)
     - System.Text.Json
+    - Compression by default
     - Advice on rolling your own
 - [Framing Approach](#framing-approach)
     - Length Prefixing
@@ -83,7 +84,6 @@ The above should be enough to get you started, but if you're interested in the d
 - [Enumeration](#enumeration)
 - [TPL Dataflow](#tpl-dataflow)
 - [Future Plans](#future-plans)
-    - Async
     - Handling drop outs
 
 ## Object Serialization
@@ -94,7 +94,8 @@ Your objects need to end up as bytes somehow, and while inefficient, utf8 json i
 
 This library makes use of System.Text.Json to handle this, but does so through the ```IBlobSerializer``` interface to users to easily swap in their own implementiation.
 
-By default, GZip compression will be applied when serializing to blobs.
+### Compression by default
+By default, the ```GZipedJsonSerializer```is used to convert objects to blobs. If you are dealing with many small objects, GZip compression may not be beneficial, and the plaintext ```UTF8JsonSerializer``` can be injected instead. 
 
 ### Advice on rolling your own
 
@@ -192,7 +193,7 @@ ObjectStreamer os = new ObjectStreamer(
     );
 ```
 
-You can also specify specific tokens for indevidual methods from ```IObjectStreamer``` and ```IObjectEnumerator``` where specific timeouts must be specified.
+You can also specify specific tokens for individual methods from ```IObjectStreamer``` and ```IObjectEnumerator``` where specific timeouts are desired.
 
 ```csharp
 [Fact]
