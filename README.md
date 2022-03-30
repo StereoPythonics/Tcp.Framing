@@ -78,11 +78,11 @@ The above should be enough to get you started, but if you're interested in the d
 - [Conversational TCP](#conversational-tcp)
     - Overwhelming your target
     - Seeking Acknowledgement
+    - Calling It Quits
 - [Screw the streams! I just want bytes!](#screw-the-streams-i-just-want-bytes)
+- [Enumeration](#enumeration)
 - [TPL Dataflow](#tpl-dataflow)
 - [Future Plans](#future-plans)
-    - TPL Dataflow
-    - Enumeration
     - Async
     - Handling drop outs
 
@@ -159,16 +159,52 @@ To prevent an overflowing buildup of in-flight messages, TCP.Framing uses bi-dir
 The code for this is simple and can be seen in ```AcknowledgedAsyncBlobStreamer.cs```
 
 ```csharp
-public async Task WriteBlob(byte[] inputBlob)
+public async Task WriteBlob(byte[] inputBlob, CancellationToken cancellationToken = default)
 {
-    await _streamWriter.WriteBlobAsFrame(inputBlob, _stream);
-    await WaitForBlobAcknowledgement();
+    await _streamWriter.WriteBlobAsFrame(inputBlob, _stream, cancellationToken);
+    await WaitForBlobAcknowledgement(cancellationToken);
 }
-public async Task<byte[]> ReadBlob()
+public async Task<byte[]> ReadBlob(CancellationToken cancellationToken = default)
 {
-    byte[] returnable = await _streamWriter.ReadFrameAsBlob(_stream);
-    await SendBlobAcknowledgement();
+    byte[] returnable = await _streamWriter.ReadFrameAsBlob(_stream, cancellationToken);
+    await SendBlobAcknowledgement(cancellationToken);
     return returnable;
+}
+```
+### Calling it Quits
+
+What happens if you never receive acknowledgement, or are waiting for a message that never comes? Something may have gone awry with your connection, or the code at the other end. It's important to know when to give up.
+
+With synchronous calls to ```NetworkStream.Read``` or ```NetworkStream.Write``` this timeout is defined through ```NetworkStream.ReadTimeout``` or ```NetworkStream.WriteTimeout```. However with the```NetworkStream.[Read/Write]Async``` methods used by Tcp.Framing, there is no default timeout behaviour.
+
+High level Tcp.Framing classes such as ```ObjectStreamer<T>``` enforce a default ```30s``` timeout for read/write methods.  But an alternative cancellation approach me be injected via construction
+
+```csharp
+public ObjectStreamer(Stream stream, IBlobSerializer<T> serializer = null, IBlobStreamer blobStreamer = null, Func<CancellationToken> injectedCancellationTokenGenerator = null)
+```
+
+A custom construction with shorter (1.5s) timeout might look like:
+
+```csharp
+ObjectStreamer os = new ObjectStreamer(
+        someNetworkStream,
+        injectedCancellationTokenGenerator: () => new CancellationTokenSource(1500).Token
+    );
+```
+
+You can also specify specific tokens for indevidual methods from ```IObjectStreamer``` and ```IObjectEnumerator``` where specific timeouts must be specified.
+
+```csharp
+[Fact]
+public async Task ConfirmAsyncReadAcceptsCancellation()
+{
+    var streamPair = TestNetworkStreamPairBuilder.GetTestStreamPair(1244);
+    IObjectStreamer<ExampleTestObject> clientObjectStreamer = new ObjectStreamer<ExampleTestObject>(streamPair.ClientStream);
+    //Notice no object writer is configured, the reader will be waiting forever!
+
+    await Assert.ThrowsAsync<OperationCanceledException>(async () => 
+        await clientObjectStreamer.ReadObjectAsync(new CancellationTokenSource(500).Token)
+    );
 }
 ```
 
@@ -201,21 +237,72 @@ public async Task<byte[]> UnframeBlob(byte[] input)
     return await UnframeBlobAsync(ms);
 }
 ```
+## Enumeration
+
+LINQ enthusiasts will be pleased to know that the ```ObjectStreamer``` supports enumerable streaming via the ```IObjectEnumerator``` interface. It can handle both both sending and receiving enumerables.
+
+```csharp
+public interface IObjectEnumerator<T>
+{
+    IAsyncEnumerable<T> ReadAsyncEnumerable(CancellationToken cancellationToken = default);
+    Task WriteAsyncEnumerable(IAsyncEnumerable<T> source, CancellationToken cancellationToken = default);
+    Task WriteEnumerable(IEnumerable<T> source, CancellationToken cancellationToken = default);
+}
+```
+
+It is critical to note that when pipelining from an ```IAsyncEnumerable<T>```, the enumerable is unbounded. And pipelines like:
+
+```csharp
+var output = await clientObjectStreamer.ReadAsyncEnumerable().Select(a => a.ExampleInt).ToListAsync(); 
+```
+will not resolve, and will meet the default timout specified configured for ```ObjectStreamer```.
+
+To avoid this scenario, you can limit the enumeration with Take(),
+
+```csharp
+var output = await clientObjectStreamer.ReadAsyncEnumerable().Take(100).Select(a => a.ExampleInt).ToListAsync(); 
+```
+
+Or if you're intent to wrestle with an unbounded enumerable (I hope you know what you're going) that you can override the default cancellation:
+
+```csharp
+var output = await clientObjectStreamer.ReadAsyncEnumerable(new CancellationTokenSource().Token).Select(a => a.ExampleInt).ToListAsync(); //this example will hang
+```
 
 ## TPL Dataflow
-TPL dataflow is magic and a great way of dealing with message flows asynchronously, Adding dataflow integration is high on my list.
+TPL dataflow is magic and a great way of dealing with message flows asynchronously. Tcp.Framing.Dataflow exposes the following Sink/Source interfaces for message pipelining.
+
+For Sending:
+```csharp
+public interface ISink<T>
+{
+    BufferBlock<T> SinkBlock { get; }
+}
+```
+
+For Receiving:
+```csharp
+public interface ISource<T>
+{
+    BroadcastBlock<T> SourceBlock { get; }
+}
+```
+
+These come with piecemeal and batched transport implementations ```Object[Sink/Source]``` and ```BatchedObject[Sink/Source]``` that only require a stream to construct.
+
+```csharp
+[Fact]
+public void ConfirmRoundTrip()
+{
+    var streamPair = TestNetworkStreamPairBuilder.GetTestStreamPair(1237);
+    ISource<TestObject> testSource = new ObjectSource<TestObject>(streamPair.ListenerStream);
+    ISink<TestObject> testSink = new ObjectSink<TestObject>(streamPair.ClientStream);
+    ConfirmGoodTransmisison(testSource,testSink);
+}
+```
+
 
 ## Future Plans
-The following are a work in progress. Async and Enumeration probably belong in this package. TPL dataflow integration will hook into some other dotnet packages and should probably have it's own TCP.Framing.Dataflow package.
-
-### Enumeration
-
-I love working with LINQ, with the new batching methods it would be really cool to have something like
-```csharp
-clientObjectStreamer.EnumerateObjects();
-```
-that might yield transmitted objecs into an unbounded IEnumerable<exampleObject> that I can utilize through LINQ pipelining.
-
 
 
 ### Handling drop outs

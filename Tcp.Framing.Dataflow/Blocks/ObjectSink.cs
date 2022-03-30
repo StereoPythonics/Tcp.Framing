@@ -8,10 +8,10 @@ public class ObjectSink<T> : ISink<T>
     public BufferBlock<T> SinkBlock { get; }
     private ActionBlock<T> _streamWriterBlock;
     private ObjectStreamer<T> _objectStreamer;
-    public ObjectSink(Stream stream)
+    public ObjectSink(Stream stream, ObjectStreamer<T> injectedStreamer = null)
     {
         SinkBlock = new BufferBlock<T>();
-        _objectStreamer = new ObjectStreamer<T>(stream);
+        _objectStreamer = injectedStreamer ?? new ObjectStreamer<T>(stream);
         _streamWriterBlock = new ActionBlock<T>(async message => await _objectStreamer.WriteObjectAsync(message));
         SinkBlock.LinkTo(_streamWriterBlock);
     }

@@ -8,10 +8,10 @@ public class ObjectSource<T> : ISource<T>
 {
     public BroadcastBlock<T> SourceBlock { get; }
     private ObjectStreamer<T> _objectStreamer;
-    public ObjectSource(Stream stream)
+    public ObjectSource(Stream stream, ObjectStreamer<T> injectedStreamer = null)
     {
         SourceBlock = new BroadcastBlock<T>(m => m);
-        _objectStreamer = new ObjectStreamer<T>(stream);
+        _objectStreamer = injectedStreamer ?? new ObjectStreamer<T>(stream);
 
         Task.Run(async () =>
         {
