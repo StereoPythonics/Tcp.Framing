@@ -1,3 +1,4 @@
+![alt tag](https://github.com/stereopythonics/Tcp.Framing/Tcp.Framing.png)
 # Tcp.Framing
 A simple, opinionated, yet extensible library for pushing stuff over TCP streams.
 
@@ -95,7 +96,7 @@ Your objects need to end up as bytes somehow, and while inefficient, utf8 json i
 This library makes use of System.Text.Json to handle this, but does so through the ```IBlobSerializer``` interface to users to easily swap in their own implementiation.
 
 ### Compression by default
-By default, the ```GZipedJsonSerializer```is used to convert objects to blobs. If you are dealing with many small objects, GZip compression may not be beneficial, and the plaintext ```UTF8JsonSerializer``` can be injected instead. 
+By default, the ```GZipedJsonSerializer``` is used to convert objects to blobs. If you are dealing with many small objects, GZip compression may not be beneficial, and the plaintext ```UTF8JsonSerializer``` can be injected instead. 
 
 ### Advice on rolling your own
 
@@ -131,7 +132,7 @@ In Tcp.Framing, a standard prefix of 4 bytes is used to encode the message body 
 
 As a convention, this signed int is encoded/decoded as little-endian regardless of system endianness to ensure cross-device compatibility.
 
-for example a 5 byte message body ```A1 B2 C3 D4 E5``` would have be framed as:
+for example a 5 byte message body ```A1 B2 C3 D4 E5``` would be framed as:
 
 ```00 00 00 05 A1 B2 C3 D4 E5``` where ```00 00 00 05``` is the 4 byte length prefix.
 

@@ -2,9 +2,21 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <LangVersion>10.0</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
-
+  <PropertyGroup>
+    <PackageId>Tcp.Framing</PackageId>
+    <Version>1.0.0-alpha</Version>
+    <PackageTags>TCP;Frame;Framing;Blobs;Raw;Length prefixing;Object;TPL Dataflow;IAsyncEnumerable</PackageTags>
+    <Description>A simple, opinionated, yet extensible library for pushing stuff over TCP streams.</Description>
+    <Authors>Barnaby Parker</Authors>
+    <Company>Barnaby Parker</Company>
+    <PackageProjectUrl>https://github.com/StereoPythonics/Tcp.Framing</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/StereoPythonics/Tcp.Framing</RepositoryUrl>
+    <RepositoryType>Github</RepositoryType>
+  </PropertyGroup>
 </Project>
