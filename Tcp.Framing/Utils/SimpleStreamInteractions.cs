@@ -11,8 +11,20 @@ public static class SimpleStreamInteractions
 
     public static async Task<byte[]> ReadAsync(this Stream stream, int count, CancellationToken cancellationToken = default)
     {
-        byte[] returnable = new byte[count];
-        await stream.ReadAsync(returnable, 0, count, cancellationToken);
-        return returnable;
+        byte[] buffer = new byte[count];
+        MemoryStream returnable = new MemoryStream();
+        
+        int remainingBytes = count;
+
+        while(remainingBytes > 0)
+        {
+            int bytesBack = await stream.ReadAsync(buffer, 0, remainingBytes, cancellationToken);
+            remainingBytes -= bytesBack;
+            returnable.Write(buffer,0,bytesBack);
+            if(bytesBack == 0) throw new InvalidDataException($@"Expected {count} readable bytes, 
+             but was only able to retrieve {count-remainingBytes} before the end of the stream.");
+        }
+        
+        return returnable.ToArray();
     }
 }

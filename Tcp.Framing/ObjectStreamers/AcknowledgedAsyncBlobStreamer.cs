@@ -32,8 +32,7 @@ public class AcknowledgedAsyncBlobStreamer : IBlobStreamer
     public async 
     Task WaitForBlobAcknowledgement(CancellationToken cancellationToken = default)
     {
-        byte[] check = new byte[_blobAcknowledgement.Length];
-        await _stream.ReadAsync(check, 0, _blobAcknowledgement.Length, cancellationToken);
+        byte[] check = await _stream.ReadAsync(_blobAcknowledgement.Length, cancellationToken);
         if(! check.SequenceEqual(_blobAcknowledgement))
         {
             throw new InvalidDataException(@$"Incorrect blob acknowledgement recieved! 
