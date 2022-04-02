@@ -271,6 +271,8 @@ Or if you're intent to wrestle with an unbounded enumerable (I hope you know wha
 var output = await clientObjectStreamer.ReadAsyncEnumerable(new CancellationTokenSource().Token).Select(a => a.ExampleInt).ToListAsync(); //this example will hang
 ```
 
+Note: in order to use linq with IAsyncEnumerable, you will need to add nuget package ```System.Linq.Async```.
+
 ## TPL Dataflow
 TPL dataflow is magic and a great way of dealing with message flows asynchronously. Tcp.Framing.Dataflow exposes the following Sink/Source interfaces for message pipelining.
 
