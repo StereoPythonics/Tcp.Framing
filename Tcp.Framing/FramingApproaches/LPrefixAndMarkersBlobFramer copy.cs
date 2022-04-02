@@ -30,10 +30,13 @@ public class LPrefixAndMarkersBlobFramer : IBlobFramer, IFramedBlobStreamWriter
     
     public static async Task FrameBlobAsync(byte[] input, Stream stream, CancellationToken cancellationToken = default)
     {
-        await stream.WriteAsync(FrameStartMarker, cancellationToken);
-        await stream.WriteAsync(EndianAwareByteEncodeInt(input.Length), cancellationToken);
-        await stream.WriteAsync(input, cancellationToken);
-        await stream.WriteAsync(FrameEndMarker, cancellationToken);
+        using MemoryStream ms = new MemoryStream();
+        ms.Write(FrameStartMarker);
+        ms.Write(EndianAwareByteEncodeInt(input.Length));
+        ms.Write(input);
+        ms.Write(FrameEndMarker);
+        ms.Seek(0,SeekOrigin.Begin);
+        await ms.CopyToAsync(stream, cancellationToken);
     }
     public static async Task<byte[]> UnframeBlobAsync(Stream stream, CancellationToken cancellationToken = default)
     {
