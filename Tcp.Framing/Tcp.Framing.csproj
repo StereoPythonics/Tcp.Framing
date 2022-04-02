@@ -7,16 +7,34 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <IsPackable>true</IsPackable>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
   <PropertyGroup>
     <PackageId>Tcp.Framing</PackageId>
-    <Version>1.0.0-alpha</Version>
-    <PackageTags>TCP;Frame;Framing;Blobs;Raw;Length prefixing;Object;TPL Dataflow;IAsyncEnumerable</PackageTags>
+    <Version>1.0.1-alpha</Version>
+    <PackageTags>TCP;Frame;Framing;Blobs;Bytes;Socket;Raw;Length prefixing;Object;IAsyncEnumerable;LINQ</PackageTags>
     <Description>A simple, opinionated, yet extensible library for pushing stuff over TCP streams.</Description>
     <Authors>Barnaby Parker</Authors>
     <Company>Barnaby Parker</Company>
+    <Copyright>(c)2022 Barnaby Parker</Copyright>
     <PackageProjectUrl>https://github.com/StereoPythonics/Tcp.Framing</PackageProjectUrl>
     <RepositoryUrl>https://github.com/StereoPythonics/Tcp.Framing</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
+    <PackageIcon>tcp.framing.logo.png</PackageIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="tcp.framing.logo.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="tcp.framing.logo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

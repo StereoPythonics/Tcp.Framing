@@ -1,4 +1,4 @@
-![alt tag](https://github.com/StereoPythonics/Tcp.Framing/blob/master/tcp.framing.logo.png)
+![alt tag](https://github.com/StereoPythonics/Tcp.Framing/blob/master/Tcp.Framing/tcp.framing.logo.png)
 # Tcp.Framing
 A simple, opinionated, yet extensible library for pushing stuff over TCP streams.
 
