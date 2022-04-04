@@ -1,9 +1,12 @@
 ﻿using System.Net.Sockets;
 using System.Net;
+using System;
 using System.Threading.Tasks;
 using Tcp.Framing;
-using Tcp.Framing.Test;
+using System.Linq;
+using System.Threading;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 class Program
 {
@@ -48,7 +51,7 @@ class Program
         Task.WaitAll(receiverSetUp, senderSetUp);
         var source = new CancellationTokenSource();
         int i = 0;
-        
+
         Stopwatch sw = new Stopwatch();
         sw.Start();
 
@@ -74,3 +77,9 @@ class Program
         source.Cancel();
     }
 }
+
+public record ExampleTestObject{
+        public string ExampleString {get;set;}
+        public double ExampleDouble {get;set;}
+        public int ExampleInt {get;set;}
+    }
