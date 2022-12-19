@@ -6,7 +6,7 @@ namespace Tcp.Framing.Test;
 public class BounceBackTests
 {
     [Trait("cat", "ext")]//Needs external application to chat with
-    [Fact]
+    //[Fact] //disabled by default for
     public void Bounce1000Messages()
     {
         var bytes = new byte[1000000];
