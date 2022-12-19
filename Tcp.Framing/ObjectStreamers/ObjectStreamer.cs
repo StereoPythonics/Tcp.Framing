@@ -6,6 +6,8 @@ public class ObjectStreamer<T> : IObjectStreamer<T>, IBlockingObjectStreamer<T>,
     IBlobSerializer<T> _serializer;
     IBlobStreamer _blobStreamer;
 
+    public event EventHandler<EventArgs> ConnectionDropped;
+
     private Func<CancellationToken,CancellationToken> _timeoutTokenIfDefault;
     
     public ObjectStreamer(Stream stream, IBlobSerializer<T> serializer = null, IBlobStreamer blobStreamer = null, Func<CancellationToken> injectedCancellationTokenGenerator = null)
@@ -18,6 +20,7 @@ public class ObjectStreamer<T> : IObjectStreamer<T>, IBlockingObjectStreamer<T>,
         _timeoutTokenIfDefault = ct => ct.Equals(default) ? defaultGeneratorFunction() : ct;
         _serializer = serializer ?? new GZipedJsonSerializer<T>();
         _blobStreamer = blobStreamer ?? new AcknowledgedAsyncBlobStreamer(stream,new LPrefixAndMarkersBlobFramer());
+        _blobStreamer.ConnectionDropped += (o,e) => ConnectionDropped.Invoke(o,e);
     }
     private static CancellationToken defaultTimeoutTokenGenerator() => new CancellationTokenSource(3000).Token; //30s
     public async Task<T> ReadObjectAsync(CancellationToken cancellationToken = default)

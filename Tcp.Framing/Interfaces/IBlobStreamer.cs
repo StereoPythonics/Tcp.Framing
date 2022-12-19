@@ -3,4 +3,5 @@ public interface IBlobStreamer
 {
     Task<byte[]> ReadBlob(CancellationToken cancellationToken = default);
     Task WriteBlob(byte[] input,CancellationToken cancellationToken = default);
+    event EventHandler<EventArgs> ConnectionDropped;
 }
